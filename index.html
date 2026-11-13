@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>ÓRBITA — Juego Arcade Espacial</title>
+    <meta
+      name="description"
+      content="Videojuego arcade espacial de un solo botón con estética synthwave/neón. Salta de planeta en planeta aprovechando la órbita gravitacional."
+    />
+    <meta property="og:title" content="ÓRBITA — Juego Arcade Espacial" />
+    <meta
+      property="og:description"
+      content="Salta de planeta en planeta en el cosmos neón. Esquiva asteroides, encadena combos y supera tu récord."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Tipografía Orbitron (solicitada) y Rajdhani para soporte legible -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Rajdhani:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body data-state="title">
+    <!-- Lienzo principal a pantalla completa donde se dibuja todo el juego -->
+    <canvas
+      id="game-canvas"
+      data-testid="game-canvas"
+      aria-label="Campo espacial interactivo de ÓRBITA"
+    ></canvas>
+
+    <!-- Botón de sonido flotante accesible en esquina superior derecha -->
+    <div class="top-controls" aria-label="Controles rápidos">
+      <button
+        type="button"
+        id="btn-mute"
+        class="icon-btn"
+        aria-label="Silenciar sonido"
+        aria-pressed="false"
+        tabindex="-1"
+        title="Silenciar / Activar sonido (M)"
+      >
+        <!-- Icono de altavoz activo -->
+        <svg class="icon-sound-on" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M11 5L6 9H3V15H6L11 19V5Z"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M15.5 8.5C16.8 9.8 16.8 14.2 15.5 15.5"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <path
+            d="M18.5 5.5C21.2 8.5 21.2 15.5 18.5 18.5"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+        <!-- Icono de altavoz silenciado -->
+        <svg class="icon-sound-off" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M11 5L6 9H3V15H6L11 19V5Z"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M16 9L21 15M21 9L16 15"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        id="btn-pause"
+        class="icon-btn hud-only"
+        aria-label="Pausar partida"
+        tabindex="-1"
+        title="Pausar (P)"
+      >
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor" />
+          <rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- HUD activo durante la partida -->
+    <header id="hud" class="hud" aria-live="polite">
+      <div class="hud-left" aria-label="Progreso de nivel">
+        <span class="hud-level-label">NIVEL <strong id="hud-level" class="tabular">1</strong></span>
+        <span class="hud-sep" aria-hidden="true">·</span>
+        <span id="hud-difficulty" class="hud-diff-label">NORMAL</span>
+      </div>
+      <div class="hud-center">
+        <div id="hud-score" class="hud-score" aria-label="Puntuación actual">0</div>
+        <div id="hud-combo" class="hud-combo" aria-hidden="true">COMBO x2</div>
+      </div>
+    </header>
+
+    <!-- Pantalla 1: Inicio / Título -->
+    <main id="screen-title" class="screen screen-title" aria-label="Pantalla de inicio">
+      <div class="title-hero">
+        <!-- Emblema orbital vectorial -->
+        <svg class="title-emblem" viewBox="0 0 120 40" fill="none" aria-hidden="true">
+          <ellipse
+            cx="60"
+            cy="20"
+            rx="50"
+            ry="11"
+            stroke="url(#emblem-grad)"
+            stroke-width="1.75"
+            stroke-dasharray="6 4"
+          />
+          <circle cx="60" cy="20" r="8" fill="#00f5ff" />
+          <circle cx="106" cy="17" r="3.5" fill="#ff00e5" />
+          <defs>
+            <linearGradient id="emblem-grad" x1="10" y1="20" x2="110" y2="20" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#00f5ff" />
+              <stop offset="0.5" stop-color="#ff00e5" />
+              <stop offset="1" stop-color="#ffe600" />
+            </linearGradient>
+          </defs>
+        </svg>
+
+        <h1 class="game-title">ÓRBITA</h1>
+
+        <p class="title-record">
+          RÉCORD <span class="sep" aria-hidden="true">·</span>
+          <strong id="title-best" class="tabular">0</strong>
+        </p>
+      </div>
+
+      <div class="title-footer">
+        <div class="title-selectors">
+          <div class="difficulty-selector" role="group" aria-label="Seleccionar dificultad">
+            <button type="button" class="diff-btn" data-difficulty="facil" aria-pressed="false">
+              Fácil
+            </button>
+            <button type="button" class="diff-btn is-active" data-difficulty="normal" aria-pressed="true">
+              Normal
+            </button>
+            <button type="button" class="diff-btn" data-difficulty="dificil" aria-pressed="false">
+              Difícil
+            </button>
+          </div>
+
+          <!-- Selector de cosmético de estela (clásica + temporales desbloqueadas hoy) -->
+          <div id="title-trail-selector" class="trail-selector" role="group" aria-label="Seleccionar estela de la nave"></div>
+        </div>
+
+        <button
+          type="button"
+          id="btn-start"
+          class="start-prompt"
+          data-start="true"
+        >
+          Toca o presiona ESPACIO para jugar
+        </button>
+
+        <p class="controls-hint">
+          Clic / Toque / Espacio: Saltar · P: Pausa · M: Sonido
+        </p>
+      </div>
+    </main>
+
+    <!-- Pantalla 3: Pausa -->
+    <section
+      id="screen-pause"
+      class="screen screen-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pause-title"
+    >
+      <div class="modal-card">
+        <h2 id="pause-title" class="modal-title">PAUSA</h2>
+        <p class="modal-subtitle">
+          Puntuación actual: <strong id="pause-score" class="tabular">0</strong>
+        </p>
+        <div class="modal-actions">
+          <button type="button" id="btn-resume" class="neon-btn neon-btn-primary">
+            Continuar
+          </button>
+          <button type="button" id="btn-restart-pause" class="neon-btn neon-btn-secondary">
+            Reiniciar
+          </button>
+          <button type="button" id="btn-menu-pause" class="neon-btn neon-btn-ghost">
+            Menú principal
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pantalla 4: Game Over -->
+    <section
+      id="screen-gameover"
+      class="screen screen-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="gameover-title"
+    >
+      <div class="modal-card modal-card-gameover">
+        <div id="gameover-new-record" class="new-record-banner" aria-live="assertive">
+          ¡NUEVO RÉCORD!
+        </div>
+        <h2 id="gameover-title" class="modal-title modal-title-danger">FIN DEL JUEGO</h2>
+
+        <div class="stats-grid">
+          <div class="stat-block">
+            <span class="stat-label">PUNTUACIÓN</span>
+            <strong id="gameover-score" class="stat-value tabular">0</strong>
+          </div>
+          <div class="stat-block">
+            <span class="stat-label">RÉCORD</span>
+            <strong id="gameover-best" class="stat-value stat-value-accent tabular">0</strong>
+          </div>
+        </div>
+
+        <p id="gameover-details" class="gameover-details">
+          Nivel: 1 · Planetas: 0 · Mejor combo: x1
+        </p>
+
+        <!-- Sistema de Desafíos Diarios (puntos extra y cosméticos temporales) -->
+        <div id="daily-challenges-section" class="daily-challenges" aria-label="Desafíos diarios">
+          <div class="panel-header">
+            <span class="panel-title panel-title-daily">DESAFÍOS DIARIOS</span>
+            <span id="daily-challenges-count" class="panel-count tabular">0/3 hoy</span>
+          </div>
+          <ul id="daily-challenges-list" class="daily-challenges-list"></ul>
+          <div id="gameover-trail-row" class="gameover-trail-row">
+            <span class="gameover-trail-label">Estela activa:</span>
+            <div id="gameover-trail-selector" class="trail-selector trail-selector-compact" role="group" aria-label="Cambiar estela temporal"></div>
+          </div>
+        </div>
+
+        <!-- Componente Bitácora de Vuelo con los hitos desbloqueados en la sesión -->
+        <div id="flight-log-section" class="flight-log" aria-label="Bitácora de vuelo">
+          <div class="flight-log-header">
+            <span class="flight-log-title">BITÁCORA DE VUELO</span>
+            <span id="flight-log-count" class="flight-log-count tabular">0 hitos</span>
+          </div>
+          <ul id="flight-log-list" class="flight-log-list"></ul>
+        </div>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            id="btn-retry"
+            class="neon-btn neon-btn-primary"
+            data-start="true"
+          >
+            Jugar de nuevo
+          </button>
+          <button type="button" id="btn-menu-gameover" class="neon-btn neon-btn-ghost">
+            Menú principal
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <script defer src="game.js"></script>
+  </body>
+</html>
